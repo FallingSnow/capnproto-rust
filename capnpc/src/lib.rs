@@ -72,10 +72,10 @@ pub mod schema;
 use std::path::{Path, PathBuf};
 
 fn run_command(mut command: ::std::process::Command) -> ::capnp::Result<()> {
-    let mut p = try!(command.spawn());
-    try!(::codegen::main(p.stdout.take().unwrap(),
-                         ::std::path::Path::new(&::std::env::var("OUT_DIR").unwrap())));
-    let exit_status = try!(p.wait());
+    let mut p = command.spawn()?;
+    ::codegen::main(p.stdout.take().unwrap(),
+                         ::std::path::Path::new(&::std::env::var("OUT_DIR").unwrap()))?;
+    let exit_status = p.wait()?;
     if !exit_status.success() {
         Err(::capnp::Error::failed(format!("Non-success exit status: {}", exit_status)))
     } else {
