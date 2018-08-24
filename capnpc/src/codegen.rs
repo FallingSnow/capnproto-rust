@@ -30,6 +30,24 @@ use schema_capnp;
 use codegen_types::{ Leaf, RustTypeInfo, RustNodeInfo, TypeParameterTexts, do_branding };
 use self::FormattedText::{Indent, Line, Branch, BlankLine};
 
+static mut CRATE_PREFIX: &'static str = "";
+
+pub fn set_edition(edition: &str) {
+    match edition {
+        "2018" => {
+            unsafe {
+                CRATE_PREFIX = "crate";
+            }
+        },
+        "2015" => {
+            unsafe {
+                CRATE_PREFIX = "";
+            }
+        },
+        _ => panic!("Unknown edition: {}", edition)
+    };
+}
+
 pub struct GeneratorContext<'a> {
     pub request: schema_capnp::code_generator_request::Reader<'a>,
     pub node_map: collections::hash_map::HashMap<u64, schema_capnp::node::Reader<'a>>,
@@ -321,7 +339,7 @@ pub fn getter_text(gen: &GeneratorContext,
             let default = try!(default_value.which());
 
             let result_type = match try!(raw_type.which()) {
-                type_::Enum(_) => format!("::std::result::Result<{},::capnp::NotInSchema>", typ),
+                type_::Enum(_) => format!("::std::result::Result<{}{},::capnp::NotInSchema>", unsafe {CRATE_PREFIX}, typ),
                 type_::AnyPointer(_) if !try!(raw_type.is_parameter()) => typ.clone(),
                 type_::Interface(_) => {
                     format!("::capnp::Result<{}>",
@@ -617,7 +635,7 @@ fn generate_setter(gen: &GeneratorContext, discriminant_offset: u32,
                     setter_interior.push(
                         Line(format!("self.builder.set_data_field::<u16>({}, value as u16)",
                                      offset)));
-                    (Some(format!("{}", the_mod)), None)
+                    (Some(format!("{}{}", unsafe {CRATE_PREFIX}, the_mod)), None)
                 }
                 type_::Struct(_) => {
                     return_result = true;
@@ -686,8 +704,7 @@ fn generate_setter(gen: &GeneratorContext, discriminant_offset: u32,
             let return_type = if return_result { "-> ::capnp::Result<()>" } else { "" };
             result.push(Line("#[inline]".to_string()));
             result.push(Line(format!("pub fn set_{}{}(&mut self, {}: {}) {} {{",
-                                     styled_name, setter_generic_param, setter_param,
-                                     reader_type, return_type)));
+                                     styled_name, setter_generic_param, setter_param, reader_type, return_type)));
             result.push(Indent(Box::new(Branch(setter_interior))));
             result.push(Line("}".to_string()));
         }
@@ -804,8 +821,8 @@ fn generate_union(gen: &GeneratorContext,
 
     let getter_result =
         Branch(vec!(Line("#[inline]".to_string()),
-                    Line(format!("pub fn which(self) -> ::std::result::Result<{}, ::capnp::NotInSchema> {{",
-                                 concrete_type)),
+                    Line(format!("pub fn which(self) -> ::std::result::Result<{}{}, ::capnp::NotInSchema> {{",
+                                 unsafe {CRATE_PREFIX}, concrete_type)),
                     Indent(Box::new(Branch(vec!(
                         Line(format!("match self.{}.get_data_field::<u16>({}) {{", field_name, doffset)),
                         Indent(Box::new(Branch(getter_interior))),

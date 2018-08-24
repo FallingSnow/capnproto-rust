@@ -83,12 +83,26 @@ fn run_command(mut command: ::std::process::Command) -> ::capnp::Result<()> {
     }
 }
 
+pub enum RustEdition {
+    Rust2015,
+    Rust2018
+}
+impl std::fmt::Display for RustEdition {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            RustEdition::Rust2015 => write!(f, "2015"),
+            RustEdition::Rust2018 => write!(f, "2018"),
+        }
+    }
+}
+
 /// A builder object for schema compiler commands.
 pub struct CompilerCommand {
     files: Vec<PathBuf>,
     src_prefixes: Vec<PathBuf>,
     import_paths: Vec<PathBuf>,
     no_standard_import: bool,
+    edition: RustEdition,
 }
 
 impl CompilerCommand {
@@ -99,6 +113,7 @@ impl CompilerCommand {
             src_prefixes: Vec::new(),
             import_paths: Vec::new(),
             no_standard_import: false,
+            edition: RustEdition::Rust2015,
         }
     }
 
@@ -135,6 +150,11 @@ impl CompilerCommand {
         self
     }
 
+    pub fn set_edition(&mut self, edition: RustEdition) -> &mut Self {
+        self.edition = edition;
+        self
+    }
+
     /// Runs the command.
     pub fn run(&mut self) -> ::capnp::Result<()> {
         let mut command = ::std::process::Command::new("capnp");
@@ -155,6 +175,8 @@ impl CompilerCommand {
         for file in &self.files {
             command.arg(&format!("{}", file.display()));
         }
+
+        codegen::set_edition(&format!("{}", self.edition));
 
         command.stdout(::std::process::Stdio::piped());
         command.stderr(::std::process::Stdio::inherit());
