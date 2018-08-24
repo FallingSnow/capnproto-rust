@@ -1173,7 +1173,7 @@ fn generate_node(gen: &GeneratorContext,
                                 Indent(Box::new(Line("::capnp::traits::FromStructBuilder::new(builder.init_struct(_private::STRUCT_SIZE))".to_string()))),
                                 Line("}".to_string()),
                                 Line(format!("fn get_from_pointer(builder: ::capnp::private::layout::PointerBuilder<'a>) -> ::capnp::Result<Builder<'a,{}>> {{", params.params)),
-                                Indent(Box::new(Line("::std::result::Result::Ok(::capnp::traits::FromStructBuilder::new(try!(builder.get_struct(_private::STRUCT_SIZE, ::std::ptr::null()))))".to_string()))),
+                                Indent(Box::new(Line("::std::result::Result::Ok(::capnp::traits::FromStructBuilder::new(builder.get_struct(_private::STRUCT_SIZE, ::std::ptr::null())?))".to_string()))),
                                 Line("}".to_string()))))),
                     Line("}".to_string()),
                     BlankLine]);
@@ -1237,7 +1237,7 @@ fn generate_node(gen: &GeneratorContext,
                 Indent(
                     Box::new(Branch(vec!(
                         Line(format!("fn get_from_pointer(reader: &::capnp::private::layout::PointerReader<'a>) -> ::capnp::Result<Reader<'a,{}>> {{",params.params)),
-                        Indent(Box::new(Line("::std::result::Result::Ok(::capnp::traits::FromStructReader::new(try!(reader.get_struct(::std::ptr::null()))))".to_string()))),
+                        Indent(Box::new(Line("::std::result::Result::Ok(::capnp::traits::FromStructReader::new(reader.get_struct(::std::ptr::null())?))".to_string()))),
                         Line("}".to_string()))))),
                 Line("}".to_string()),
                 BlankLine,
@@ -1569,7 +1569,7 @@ fn generate_node(gen: &GeneratorContext,
                 Indent(
                     Box::new(Branch(vec![
                         Line(format!("fn get_from_pointer(reader: &::capnp::private::layout::PointerReader<'a>) -> ::capnp::Result<Client<{}>> {{",params.params)),
-                        Indent(Box::new(Line(format!("::std::result::Result::Ok(::capnp::capability::FromClientHook::new(try!(reader.get_capability())))")))),
+                        Indent(Box::new(Line(format!("::std::result::Result::Ok(::capnp::capability::FromClientHook::new(reader.get_capability()?))")))),
                         Line("}".to_string())]))),
                 Line("}".to_string()))));
 
@@ -1583,7 +1583,7 @@ fn generate_node(gen: &GeneratorContext,
                             Indent(Box::new(Line("unimplemented!()".to_string()))),
                             Line("}".to_string()),
                             Line(format!("fn get_from_pointer(builder: ::capnp::private::layout::PointerBuilder<'a>) -> ::capnp::Result<Client<{}>> {{", params.params)),
-                            Indent(Box::new(Line("::std::result::Result::Ok(::capnp::capability::FromClientHook::new(try!(builder.get_capability())))".to_string()))),
+                            Indent(Box::new(Line("::std::result::Result::Ok(::capnp::capability::FromClientHook::new(builder.get_capability()?))".to_string()))),
                             Line("}".to_string())]))),
                 Line("}".to_string()),
                 BlankLine]));
