@@ -43,6 +43,17 @@ pub struct GeneratorContext<'a> {
     pub rust_edition: RustEdition,
 }
 
+fn root_scope(rust_edition: RustEdition, root_name: String) -> Vec<String> {
+    match rust_edition {
+        RustEdition::Rust2015 => {
+            vec![format!("::{}", root_name)]
+        }
+        RustEdition::Rust2018 => {
+            vec!["crate".into(), root_name]
+        }
+    }
+}
+
 impl <'a> GeneratorContext<'a> {
     pub fn new(message:&'a capnp::message::Reader<capnp::serialize::OwnedSegments>, rust_edition: RustEdition)
             -> ::capnp::Result<GeneratorContext<'a>> {
@@ -65,14 +76,20 @@ impl <'a> GeneratorContext<'a> {
             for import in imports.iter() {
                 let importpath = ::std::path::Path::new(import.get_name()?);
                 let root_name: String = format!(
-                    "::{}_capnp",
+                    "{}_capnp",
                     path_to_stem_string(importpath)?.replace("-", "_"));
-                populate_scope_map(&gen.node_map, &mut gen.scope_map, vec!(root_name), import.get_id())?;
+                populate_scope_map(&gen.node_map,
+                                   &mut gen.scope_map,
+                                   root_scope(rust_edition, root_name),
+                                   import.get_id())?;
             }
 
             let root_name = path_to_stem_string(requested_file.get_filename()?)?;
-            let root_mod = format!("::{}_capnp", root_name.replace("-", "_"));
-            populate_scope_map(&gen.node_map, &mut gen.scope_map, vec!(root_mod), id)?;
+            let root_mod = format!("{}_capnp", root_name.replace("-", "_"));
+            populate_scope_map(&gen.node_map,
+                               &mut gen.scope_map,
+                               root_scope(rust_edition, root_mod),
+                               id)?;
         }
         Ok(gen)
     }
