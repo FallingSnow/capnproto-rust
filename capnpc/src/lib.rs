@@ -71,28 +71,15 @@ pub mod schema;
 
 use std::path::{Path, PathBuf};
 
-fn run_command(mut command: ::std::process::Command) -> ::capnp::Result<()> {
+fn run_command(mut command: ::std::process::Command, edition: codegen::RustEdition) -> ::capnp::Result<()> {
     let mut p = command.spawn()?;
-    ::codegen::main(p.stdout.take().unwrap(),
-                         ::std::path::Path::new(&::std::env::var("OUT_DIR").unwrap()))?;
+    ::codegen::generate_code(p.stdout.take().unwrap(),
+                         ::std::path::Path::new(&::std::env::var("OUT_DIR").unwrap()), edition)?;
     let exit_status = p.wait()?;
     if !exit_status.success() {
         Err(::capnp::Error::failed(format!("Non-success exit status: {}", exit_status)))
     } else {
         Ok(())
-    }
-}
-
-pub enum RustEdition {
-    Rust2015,
-    Rust2018
-}
-impl std::fmt::Display for RustEdition {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            RustEdition::Rust2015 => write!(f, "2015"),
-            RustEdition::Rust2018 => write!(f, "2018"),
-        }
     }
 }
 
@@ -102,7 +89,7 @@ pub struct CompilerCommand {
     src_prefixes: Vec<PathBuf>,
     import_paths: Vec<PathBuf>,
     no_standard_import: bool,
-    edition: RustEdition,
+    edition: codegen::RustEdition,
 }
 
 impl CompilerCommand {
@@ -113,7 +100,7 @@ impl CompilerCommand {
             src_prefixes: Vec::new(),
             import_paths: Vec::new(),
             no_standard_import: false,
-            edition: RustEdition::Rust2015,
+            edition: codegen::RustEdition::Rust2015,
         }
     }
 
@@ -150,7 +137,7 @@ impl CompilerCommand {
         self
     }
 
-    pub fn set_edition(&mut self, edition: RustEdition) -> &mut Self {
+    pub fn set_edition(&mut self, edition: codegen::RustEdition) -> &mut Self {
         self.edition = edition;
         self
     }
@@ -176,12 +163,10 @@ impl CompilerCommand {
             command.arg(&format!("{}", file.display()));
         }
 
-        codegen::set_edition(&format!("{}", self.edition));
-
         command.stdout(::std::process::Stdio::piped());
         command.stderr(::std::process::Stdio::inherit());
 
-        run_command(command).map_err(|error| {
+        run_command(command, self.edition).map_err(|error| {
             ::capnp::Error::failed(format!(
                 "Error while trying to execute `capnp compile`: {}.  \
                  Please verify that version 0.5.2 or higher of the capnp executable \
