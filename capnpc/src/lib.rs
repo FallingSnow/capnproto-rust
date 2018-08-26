@@ -89,7 +89,7 @@ pub struct CompilerCommand {
     src_prefixes: Vec<PathBuf>,
     import_paths: Vec<PathBuf>,
     no_standard_import: bool,
-    edition: codegen::RustEdition,
+    rust_edition: codegen::RustEdition,
 }
 
 impl CompilerCommand {
@@ -100,7 +100,7 @@ impl CompilerCommand {
             src_prefixes: Vec::new(),
             import_paths: Vec::new(),
             no_standard_import: false,
-            edition: codegen::RustEdition::Rust2015,
+            rust_edition: codegen::RustEdition::Rust2015,
         }
     }
 
@@ -137,8 +137,8 @@ impl CompilerCommand {
         self
     }
 
-    pub fn set_edition(&mut self, edition: codegen::RustEdition) -> &mut Self {
-        self.edition = edition;
+    pub fn edition(&mut self, rust_edition: codegen::RustEdition) -> &mut Self {
+        self.rust_edition = rust_edition;
         self
     }
 
@@ -166,7 +166,7 @@ impl CompilerCommand {
         command.stdout(::std::process::Stdio::piped());
         command.stderr(::std::process::Stdio::inherit());
 
-        run_command(command, self.edition).map_err(|error| {
+        run_command(command, self.rust_edition).map_err(|error| {
             ::capnp::Error::failed(format!(
                 "Error while trying to execute `capnp compile`: {}.  \
                  Please verify that version 0.5.2 or higher of the capnp executable \
