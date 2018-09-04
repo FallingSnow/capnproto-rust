@@ -25,3 +25,5 @@ path = "src/main.rs"
 [dependencies]
 capnp = { version = "0.9", path = "../capnp" }
 
+[features]
+serde = []

@@ -1390,7 +1390,9 @@ fn generate_node(gen: &GeneratorContext,
 
             output.push(Branch(vec!(
                 Line("#[repr(u16)]".to_string()),
-                Line("#[derive(Clone, Copy, PartialEq)]".to_string()),
+                Line("#[derive(Clone, Copy, PartialEq, Debug)]".to_string()),
+                #[cfg(feature = "serde")]
+                Line("#[derive(::serde_derive::Serialize, ::serde_derive::Deserialize)]".to_string()),
                 Line(format!("pub enum {} {{", last_name)),
                 Indent(Box::new(Branch(members))),
                 Line("}".to_string()))));
